@@ -17,6 +17,12 @@ h1 {
   font-size: 1em;
 }
 
+.my-color3 {
+  color: rgb(76, 97, 125);
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 1em;
+}
+
 .button-style {
   color: white;
   background-color: rgb(155, 132, 104);
