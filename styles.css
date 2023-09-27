@@ -23,3 +23,26 @@ h1 {
   border-color: rgb(155, 132, 104);
   font-family: Georgia, "Times New Roman", Times, serif;
 }
+
+.space {
+  margin-top: 5em;
+}
+
+p {
+  color: rgb(155, 132, 104);
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-style: oblique;
+  text-shadow: 2px 2px rgb(255, 255, 255);
+  font-size: 1em;
+  margin: 10px 0 0 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 30em;
+  animation: type 4s steps(60, end);
+}
+
+@keyframes type {
+  from {
+    width: 0;
+  }
+}
