@@ -2,11 +2,19 @@ h1 {
   color: rgb(155, 132, 104);
   text-shadow: 2px 2px rgb(155, 164, 155);
   font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 3em;
 }
 
 .my-color {
   color: rgb(155, 132, 104);
   font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 1.5em;
+}
+
+.my-color2 {
+  color: rgb(155, 132, 104);
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 1em;
 }
 
 .button-style {
