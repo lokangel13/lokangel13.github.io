@@ -1,0 +1,17 @@
+h1 {
+  color: rgb(155, 132, 104);
+  text-shadow: 2px 2px rgb(155, 164, 155);
+  font-family: Georgia, "Times New Roman", Times, serif;
+}
+
+.my-color {
+  color: rgb(155, 132, 104);
+  font-family: Georgia, "Times New Roman", Times, serif;
+}
+
+.button-style {
+  color: white;
+  background-color: rgb(155, 132, 104);
+  border-color: rgb(155, 132, 104);
+  font-family: Georgia, "Times New Roman", Times, serif;
+}
