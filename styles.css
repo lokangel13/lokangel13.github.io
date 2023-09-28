@@ -76,3 +76,7 @@ td {
   color: rgb(96, 80, 60);
   font-family: Georgia, "Times New Roman", Times, serif;
 }
+
+body {
+  padding-bottom: 10em;
+}
