@@ -62,7 +62,7 @@ p {
 }
 
 table {
-  width: 50%;
+  width: 60%;
   margin: auto;
   background-color: rgba(255, 255, 255, 0.5);
   font-size: 1em;
@@ -100,6 +100,7 @@ form {
   border: 0.2em solid #ccc;
   border-radius: 0.5em;
 }
+
 
 label {
   color: rgb(96, 80, 60);
@@ -157,3 +158,27 @@ footer {
   color: white;
   font-size: 0.5em;
 }
+
+quote {
+  margin-left: 5em;          
+  background-color: rgba(255, 255, 255, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            color: rgb(155, 132, 104); 
+            font-family: Georgia, "Times New Roman"
+            font-size: 1em;
+        
+        }
+
+ audio {
+            filter: sepia(20%) saturate(70%) grayscale(1) contrast(99%) invert(12%);
+      
+    width: 160px;
+    height: 26px;
+        }
+
+       
+        audio::cue {
+            width: 20px;
+            color: rgb(155, 132, 104);
+        }
