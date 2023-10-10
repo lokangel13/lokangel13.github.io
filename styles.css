@@ -190,3 +190,9 @@ footer {
 #myBtn:hover {
   background-color: #4b7d83;
 }
+
+.imgrd {
+  border-radius: 10%;
+  width: 180px;
+  border: 3px solid rgba(5, 53, 5, 0.5);
+}
