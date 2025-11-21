@@ -1,5 +1,5 @@
 body {
-  background-color: #edfdfd89;
+  background-color: #e7e7e789;
 
   background-size: 30%;
   background-position: right bottom;
@@ -9,27 +9,27 @@ body {
 
 h1 {
   color: rgb(56, 110, 61);
-  text-shadow: 2px 2px rgb(155, 164, 155);
+  text-shadow: 1px 2px rgb(155, 164, 155);
   font-family: Georgia, "Times New Roman", Times, serif;
-  font-size: 3em;
+  font-size: 30px;
 }
 
 h2 {
   color: rgb(79, 149, 154);
   text-shadow: 1px 2px rgb(255, 255, 255);
   font-family: Georgia, "Times New Roman", Times, serif;
-  font-size: 1.5em;
+  font-size: 15px;
   text-indent: 4em;
 }
 
 .my-color {
-  color: rgb(99, 155, 104);
+  color: rgb(120, 144, 122);
   font-family: Georgia, "Times New Roman", Times, serif;
-  font-size: 1.5em;
+  font-size: 20px;
 }
 
 .my-color2 {
-  color: rgb(155, 132, 104);
+  color: rgb(144, 127, 107);
   font-family: Georgia, "Times New Roman", Times, serif;
   font-size: 1em;
 }
@@ -42,7 +42,7 @@ h2 {
 
 .button-style {
   color: white;
-  background-color: rgb(155, 132, 104);
+  background-color: rgb(123, 115, 105);
   border-color: rgb(155, 132, 104);
   font-family: Georgia, "Times New Roman", Times, serif;
 }
@@ -52,7 +52,7 @@ h2 {
 }
 
 p {
-  color: rgb(155, 132, 104);
+  color: rgb(174, 141, 102);
   font-family: Georgia, "Times New Roman", Times, serif;
   font-style: oblique;
   text-shadow: 2px 2px rgb(255, 255, 255);
@@ -176,7 +176,7 @@ footer {
   padding: 0.5em;
   background-color: rgb(67, 123, 94);
   color: white;
-  font-size: 0.5em;
+  font-size: 10px;
 }
 
 #myBtn {
