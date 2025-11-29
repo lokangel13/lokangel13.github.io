@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reader</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+    <link href="styles.css" rel="stylesheet" />
+  <link rel="icon" href="Icon/icon.png" />
+  </head>
+   
+    <!-- PDF.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --sidebar-bg: #ffffff;
+            --toolbar-bg: #2c3e50;
+            --toolbar-text: #ecf0f1;
+            --accent: #3498db;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            height: 60px;
+            background-color: var(--toolbar-bg);
+            color: var(--toolbar-text);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 100;
+            position: relative;
+        }
+
+        .tool-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* Color Pickers */
+        .color-picker-wrapper {
+            position: relative;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid white;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        input[type="color"] {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .zoom-display {
+            min-width: 60px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Bookmarks Panel */
+        .bookmarks-panel {
+            position: absolute;
+            top: 65px;
+            right: 20px;
+            width: 250px;
+            background: white;
+            color: #333;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            padding: 15px;
+            display: none;
+            z-index: 200;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .bookmarks-panel.show {
+            display: block;
+        }
+
+        .bookmarks-header {
+            font-weight: bold;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bookmark-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .bookmark-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .bookmark-link {
+            flex: 1;
+            color: var(--toolbar-bg);
+            text-decoration: none;
+        }
+
+        .delete-bookmark {
+            color: #e74c3c;
+            cursor: pointer;
+            padding: 4px;
+            opacity: 0.7;
+        }
+        
+        .empty-message {
+            color: #888;
+            font-style: italic;
+            text-align: center;
+            padding: 10px;
+            font-size: 0.9em;
+        }
+
+        /* Main Viewer Area */
+        .viewer-container {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        #pdf-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Page styling */
+        .page-container {
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: white;
+            transition: transform 0.2s ease;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .annotation-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            touch-action: none;
+        }
+
+        #loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: var(--toolbar-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 300;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="tool-group">
+            <button class="btn" onclick="handleZoom(-0.1)"><i class="fas fa-minus"></i></button>
+            <span class="zoom-display" id="zoomLevel">100%</span>
+            <button class="btn" onclick="handleZoom(0.1)"><i class="fas fa-plus"></i></button>
+        </div>
+
+        <div class="tool-group">
+            <button class="btn active" id="tool-cursor" onclick="setTool('cursor')" title="Navigate/Scroll">
+                <i class="fas fa-mouse-pointer"></i>
+            </button>
+            
+            <!-- Pen Tool + Color -->
+            <button class="btn" id="tool-pen" onclick="setTool('pen')" title="Pen">
+                <i class="fas fa-pen"></i>
+            </button>
+            <div class="color-picker-wrapper" title="Pen Color">
+                <input type="color" id="penColor" value="#e74c3c">
+            </div>
+
+            <!-- Highlighter Tool + Color -->
+            <button class="btn" id="tool-highlight" onclick="setTool('highlight')" title="Highlighter">
+                <i class="fas fa-highlighter"></i>
+            </button>
+            <div class="color-picker-wrapper" title="Highlight Color">
+                <input type="color" id="highlightColor" value="#fff133">
+            </div>
+
+            <div style="width:10px;"></div>
+
+            <!-- Eraser -->
+            <button class="btn" id="tool-eraser" onclick="setTool('eraser')" title="Eraser (Click or Drag over items)">
+                <i class="fas fa-eraser"></i>
+            </button>
+            
+            <button class="btn" onclick="clearCurrentPageAnnotations()" title="Clear All Page Annotations">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+
+        <div class="tool-group">
+            <button class="btn" onclick="toggleBookmarksList()" title="View Saved Bookmarks">
+                <i class="fas fa-list"></i>
+            </button>
+            <button class="btn" onclick="toggleBookmark()" title="Bookmark Current Page">
+                <i class="fas fa-bookmark"></i>
+            </button>
+        </div>
+
+        <!-- Bookmarks Dropdown Panel -->
+        <div class="bookmarks-panel" id="bookmarksPanel">
+            <div class="bookmarks-header">
+                <span>Saved Pages</span>
+                <i class="fas fa-times" style="cursor:pointer;" onclick="toggleBookmarksList()"></i>
+            </div>
+            <div id="bookmarksListContent"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="viewer-container" id="mainContainer">
+        <div id="loader">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Loading Document...</span>
+        </div>
+        <div id="pdf-wrapper"></div>
+    </div>
+
+    <div id="toast" class="toast">Notification</div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const url = 'wongpikwan.pdf';
+
+        // --- STATE ---
+        let pdfDoc = null;
+        let scale = 1.0;
+        let currentTool = 'cursor'; 
+        let annotations = {}; // { pageIndex: [ {tool, color, points: [{x,y}...]} ] }
+        let bookmarks = []; 
+        let helperCanvas = document.createElement('canvas'); // Offscreen canvas for layering
+
+        // --- DOM ELEMENTS ---
+        const container = document.getElementById('pdf-wrapper');
+        const zoomDisplay = document.getElementById('zoomLevel');
+        const loader = document.getElementById('loader');
+        const bookmarksPanel = document.getElementById('bookmarksPanel');
+        const bookmarksListContent = document.getElementById('bookmarksListContent');
+        const penColorInput = document.getElementById('penColor');
+        const highlightColorInput = document.getElementById('highlightColor');
+
+        // --- INITIALIZATION ---
+        async function loadPDF() {
+            try {
+                const storedBookmarks = localStorage.getItem('pdf_bookmarks_list');
+                if (storedBookmarks) bookmarks = JSON.parse(storedBookmarks);
+
+                const loadingTask = pdfjsLib.getDocument(url);
+                pdfDoc = await loadingTask.promise;
+                loader.style.display = 'none';
+                renderAllPages();
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                loader.innerHTML = `<span style="color:red">Error loading PDF. Please check the file path.</span>`;
+            }
+        }
+
+        // --- RENDERING PIPELINE ---
+        async function renderAllPages() {
+            container.innerHTML = '';
+            for (let i = 1; i <= pdfDoc.numPages; i++) {
+                await renderPage(i);
+            }
+        }
+
+        async function renderPage(num) {
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({ scale: scale });
+
+            const pageDiv = document.createElement('div');
+            pageDiv.className = 'page-container';
+            pageDiv.id = `page-${num}`;
+            pageDiv.style.width = `${viewport.width}px`;
+            pageDiv.style.height = `${viewport.height}px`;
+            pageDiv.dataset.pageNumber = num;
+
+            // 1. PDF Layer
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            // 2. Annotation Layer
+            const annoCanvas = document.createElement('canvas');
+            annoCanvas.className = 'annotation-layer';
+            annoCanvas.height = viewport.height;
+            annoCanvas.width = viewport.width;
+            annoCanvas.dataset.pageIndex = num;
+
+            pageDiv.appendChild(canvas);
+            pageDiv.appendChild(annoCanvas);
+            container.appendChild(pageDiv);
+
+            // Async render PDF
+            const renderContext = { canvasContext: ctx, viewport: viewport };
+            await page.render(renderContext).promise;
+
+            setupInteraction(annoCanvas, num, viewport);
+            
+            // Initial Draw of annotations
+            drawLayer(annoCanvas, num, null);
+        }
+
+        // --- THE "SMART" RENDERER ---
+        // Handles "No Darkening" highlight logic and Pen layering
+        function drawLayer(canvas, pageIndex, currentStroke) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+
+            // Clear Main Canvas
+            ctx.clearRect(0, 0, width, height);
+
+            const pageAnnos = annotations[pageIndex] || [];
+            
+            // 1. HIGHLIGHT LAYER
+            // To prevent darkening, we draw ALL highlights onto an offscreen buffer at 100% opacity,
+            // then draw that buffer onto the main canvas at 50% opacity.
+            
+            // Filter highlights
+            const highlights = pageAnnos.filter(a => a.tool === 'highlight');
+            if (currentStroke && currentStroke.tool === 'highlight') {
+                highlights.push(currentStroke);
+            }
+
+            if (highlights.length > 0) {
+                // Resize helper if needed
+                if (helperCanvas.width !== width || helperCanvas.height !== height) {
+                    helperCanvas.width = width;
+                    helperCanvas.height = height;
+                }
+                const hCtx = helperCanvas.getContext('2d');
+                hCtx.clearRect(0, 0, width, height);
+                hCtx.lineCap = 'round';
+                hCtx.lineJoin = 'round';
+
+                highlights.forEach(h => {
+                    hCtx.beginPath();
+                    hCtx.strokeStyle = h.color;
+                    hCtx.lineWidth = 20 * scale; // Scale thickness
+                    
+                    if (h.points.length > 0) {
+                        hCtx.moveTo(h.points[0].x * width, h.points[0].y * height);
+                        for(let i=1; i<h.points.length; i++) {
+                            hCtx.lineTo(h.points[i].x * width, h.points[i].y * height);
+                        }
+                    }
+                    hCtx.stroke();
+                });
+
+                // Composite Highlight Layer
+                ctx.save();
+                ctx.globalAlpha = 0.4; // Fixed opacity for all highlights
+                ctx.globalCompositeOperation = 'multiply'; // Blends nicely with text
+                ctx.drawImage(helperCanvas, 0, 0);
+                ctx.restore();
+            }
+
+            // 2. PEN LAYER
+            // Pens are drawn directly on top
+            const pens = pageAnnos.filter(a => a.tool === 'pen');
+            if (currentStroke && currentStroke.tool === 'pen') {
+                pens.push(currentStroke);
+            }
+
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.globalAlpha = 1.0;
+            ctx.globalCompositeOperation = 'source-over';
+
+            pens.forEach(p => {
+                ctx.beginPath();
+                ctx.strokeStyle = p.color;
+                ctx.lineWidth = 2 * scale; // Scale thickness
+
+                if (p.points.length > 0) {
+                    ctx.moveTo(p.points[0].x * width, p.points[0].y * height);
+                    for(let i=1; i<p.points.length; i++) {
+                        ctx.lineTo(p.points[i].x * width, p.points[i].y * height);
+                    }
+                }
+                ctx.stroke();
+            });
+        }
+
+        // --- INTERACTION ---
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-group .btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tool-${tool}`).classList.add('active');
+
+            const layers = document.querySelectorAll('.annotation-layer');
+            const mainContainer = document.getElementById('mainContainer');
+
+            if (tool === 'cursor') {
+                layers.forEach(el => el.style.pointerEvents = 'none');
+                mainContainer.style.cursor = 'default';
+            } else if (tool === 'eraser') {
+                layers.forEach(el => el.style.pointerEvents = 'auto');
+                mainContainer.style.cursor = 'cell'; // distinct cursor for eraser
+            } else {
+                layers.forEach(el => el.style.pointerEvents = 'auto');
+                mainContainer.style.cursor = 'crosshair';
+            }
+        }
+
+        function setupInteraction(canvas, pageIndex, viewport) {
+            let isDrawingLocal = false;
+            let points = [];
+            
+            const getCoords = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                const y = (e.clientY || e.touches[0].clientY) - rect.top;
+                return { x, y };
+            };
+
+            const handleEraser = (x, y) => {
+                // Check if we hit any existing annotation on this page
+                if (!annotations[pageIndex]) return;
+                
+                const width = canvas.width;
+                const height = canvas.height;
+                const hitThreshold = 10; // Pixels distance
+
+                const originalLength = annotations[pageIndex].length;
+                
+                // Filter OUT items that are touched
+                annotations[pageIndex] = annotations[pageIndex].filter(anno => {
+                    // Check every point in the annotation stroke
+                    for (let p of anno.points) {
+                        const px = p.x * width;
+                        const py = p.y * height;
+                        const dist = Math.hypot(px - x, py - y);
+                        if (dist < hitThreshold) return false; // Delete this annotation
+                    }
+                    return true;
+                });
+
+                // If something was removed, redraw
+                if (annotations[pageIndex].length !== originalLength) {
+                    drawLayer(canvas, pageIndex, null);
+                }
+            };
+
+            const start = (e) => {
+                if (currentTool === 'cursor') return;
+                e.preventDefault();
+                const { x, y } = getCoords(e);
+                
+                if (currentTool === 'eraser') {
+                    isDrawingLocal = true; // Use this flag to allow dragging eraser
+                    handleEraser(x, y);
+                    return;
+                }
+
+                isDrawingLocal = true;
+                points = [{ x: x / canvas.width, y: y / canvas.height }];
+                
+                // Immediate feedback
+                const currentColor = currentTool === 'pen' ? penColorInput.value : highlightColorInput.value;
+                const tempStroke = { tool: currentTool, color: currentColor, points: points };
+                drawLayer(canvas, pageIndex, tempStroke);
+            };
+
+            const move = (e) => {
+                if (!isDrawingLocal) return;
+                e.preventDefault();
+                const { x, y } = getCoords(e);
+
+                if (currentTool === 'eraser') {
+                    handleEraser(x, y);
+                    return;
+                }
+
+                points.push({ x: x / canvas.width, y: y / canvas.height });
+                
+                const currentColor = currentTool === 'pen' ? penColorInput.value : highlightColorInput.value;
+                const tempStroke = { tool: currentTool, color: currentColor, points: points };
+                drawLayer(canvas, pageIndex, tempStroke);
+            };
+
+            const end = (e) => {
+                if (!isDrawingLocal) return;
+                isDrawingLocal = false;
+
+                if (currentTool === 'eraser') return;
+
+                if (!annotations[pageIndex]) annotations[pageIndex] = [];
+                
+                const currentColor = currentTool === 'pen' ? penColorInput.value : highlightColorInput.value;
+                annotations[pageIndex].push({
+                    tool: currentTool,
+                    color: currentColor,
+                    points: points
+                });
+
+                drawLayer(canvas, pageIndex, null); // Finalize
+                points = [];
+            };
+
+            canvas.addEventListener('mousedown', start);
+            canvas.addEventListener('mousemove', move);
+            canvas.addEventListener('mouseup', end);
+            canvas.addEventListener('mouseleave', end);
+            canvas.addEventListener('touchstart', start);
+            canvas.addEventListener('touchmove', move);
+            canvas.addEventListener('touchend', end);
+        }
+
+        // --- ZOOM LOGIC ---
+        function handleZoom(delta) {
+            const newScale = scale + delta;
+            if (newScale >= 0.5 && newScale <= 3.0) {
+                scale = parseFloat(newScale.toFixed(1));
+                zoomDisplay.textContent = Math.round(scale * 100) + '%';
+                renderAllPages(); 
+            }
+        }
+
+        // --- BOOKMARK LOGIC ---
+        function getCurrentPage() {
+            const pages = document.querySelectorAll('.page-container');
+            let currentPage = 1;
+            pages.forEach(p => {
+                const rect = p.getBoundingClientRect();
+                if (rect.top >= -rect.height/2 && rect.top < window.innerHeight / 2) {
+                    currentPage = parseInt(p.dataset.pageNumber);
+                }
+            });
+            return currentPage;
+        }
+
+        function toggleBookmark() {
+            const currentPage = getCurrentPage();
+            const index = bookmarks.indexOf(currentPage);
+            if (index === -1) {
+                bookmarks.push(currentPage);
+                bookmarks.sort((a, b) => a - b);
+                showToast(`Bookmarked Page ${currentPage}`);
+            } else {
+                bookmarks.splice(index, 1);
+                showToast(`Removed Bookmark for Page ${currentPage}`);
+            }
+            localStorage.setItem('pdf_bookmarks_list', JSON.stringify(bookmarks));
+            renderBookmarksList();
+        }
+
+        function toggleBookmarksList() {
+            if (bookmarksPanel.classList.contains('show')) {
+                bookmarksPanel.classList.remove('show');
+            } else {
+                renderBookmarksList();
+                bookmarksPanel.classList.add('show');
+            }
+        }
+
+        function renderBookmarksList() {
+            if (bookmarks.length === 0) {
+                bookmarksListContent.innerHTML = '<div class="empty-message">No bookmarks saved</div>';
+                return;
+            }
+            let html = '';
+            bookmarks.forEach(pageNum => {
+                html += `
+                    <div class="bookmark-item">
+                        <div class="bookmark-link" onclick="jumpToPage(${pageNum})">
+                            <i class="fas fa-bookmark" style="color:var(--accent); margin-right:5px;"></i>
+                            Page ${pageNum}
+                        </div>
+                        <i class="fas fa-trash delete-bookmark" onclick="removeBookmark(${pageNum})" title="Remove"></i>
+                    </div>`;
+            });
+            bookmarksListContent.innerHTML = html;
+        }
+
+        function jumpToPage(pageNum) {
+            const pageEl = document.getElementById(`page-${pageNum}`);
+            if (pageEl) {
+                pageEl.scrollIntoView({ behavior: 'smooth' });
+                bookmarksPanel.classList.remove('show');
+            }
+        }
+
+        function removeBookmark(pageNum) {
+            const index = bookmarks.indexOf(pageNum);
+            if (index > -1) {
+                bookmarks.splice(index, 1);
+                localStorage.setItem('pdf_bookmarks_list', JSON.stringify(bookmarks));
+                renderBookmarksList();
+            }
+        }
+
+        function clearCurrentPageAnnotations() {
+            const page = getCurrentPage();
+            if(confirm(`Clear ALL annotations on Page ${page}?`)) {
+                annotations[page] = [];
+                const canvas = document.querySelector(`.annotation-layer[data-page-index="${page}"]`);
+                drawLayer(canvas, page, null);
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.opacity = 1;
+            setTimeout(() => toast.style.opacity = 0, 2000);
+        }
+
+        window.addEventListener('load', loadPDF);
+
+    </script>
+
+
+
+
+
+      <footer>
+        2025 Angel. All rights reserved.</footer>
+  </body>
+</html>
